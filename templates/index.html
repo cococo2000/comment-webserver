@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Comment System</title>
+</head>
+<body>
+    <h1>Comment System</h1>
+
+    <h2>Add a Comment</h2>
+    <form id="commentForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" required><br>
+        <label for="content">Comment:</label>
+        <textarea id="content" required></textarea><br>
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Comments</h2>
+    <ul id="commentList">
+    </ul>
+
+    <script>
+        // Function to fetch and display comments
+        function getComments() {
+            fetch('http://127.0.0.1:5000/query-comments')
+                .then(response => response.json())
+                .then(data => {
+                    const commentList = document.getElementById('commentList');
+                    commentList.innerHTML = '';
+
+                    data.forEach(comment => {
+                        const listItem = document.createElement('li');
+
+                        listItem.textContent = `${comment.name}: ${comment.content}`;
+                        // Add a delete button for each comment
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.addEventListener('click', () => deleteComment(comment.id));
+                        listItem.appendChild(deleteButton);
+
+                        commentList.appendChild(listItem);
+                    });
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        // Function to delete a comment by its ID
+        function deleteComment(commentId) {
+            fetch(`http://127.0.0.1:5000/delete-comment?id=${commentId}`, {
+                method: 'DELETE',
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    getComments(); // Refresh comments after deletion
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        // Event listener for form submission
+        const commentForm = document.getElementById('commentForm');
+        commentForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const content = document.getElementById('content').value;
+
+            fetch('http://127.0.0.1:5000/submit-comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    content: content,
+                }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    getComments(); // Refresh comments after submission
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        });
+
+        // Fetch comments when the page loads
+        getComments();
+    </script>
+</body>
+</html>
