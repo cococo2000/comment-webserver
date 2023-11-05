@@ -20,6 +20,7 @@ cursor.execute(''' \
     CREATE TABLE IF NOT EXISTS user_comments ( \
         id INTEGER PRIMARY KEY AUTOINCREMENT, \
         parent_id INTEGER, \
+        table_id INTEGER, \
         name TEXT, \
         content TEXT \
     ) \
@@ -32,6 +33,7 @@ def receive_data():
     try:
         print("\nAdd new comment...")
         data = request.get_json()
+        table_id = data.get('table_id', -1)
         name = data['name']
         content = data['content']
         parent_id = data.get('parent_id', 0)
@@ -39,17 +41,19 @@ def receive_data():
         if not name or not content:
             print('Name and content cannot be empty')
             return jsonify({'error': 'Name and content cannot be empty'})
+        print('Table ID: {table_id}'.format(table_id=table_id))
         print('Name: {name}'.format(name=name))
         print('Content: {content}'.format(content=content))
         print('Parent ID: {parent_id}'.format(parent_id=parent_id))
-        cursor.execute("INSERT INTO user_comments (parent_id, name, content) VALUES (?, ?, ?)", (parent_id, name, content))
+        cursor.execute("INSERT INTO user_comments (parent_id, table_id, name, content) VALUES (?, ?, ?, ?)", (parent_id, table_id, name, content))
         db_connection.commit()
         comment_id = cursor.lastrowid
         print('Data received and stored successfully with ID: {id}'.format(id=comment_id))
         return jsonify({'id': comment_id, 
+                        "parent_id": parent_id,
+                        "table_id": table_id,
                         "name": name,
                         "content": content, 
-                        "parent_id": parent_id,
                         'message': 'Data received and stored successfully'})
     except Exception as e:
         print('Error occurred while receiving data: "{error}"'.format(error=str(e)))
@@ -64,9 +68,13 @@ def query_comment():
         cursor.execute("SELECT * FROM user_comments WHERE id = ?", (comment_id,))
         row = cursor.fetchone()
         if row:
-            comment_id, parent_id, name, content = row
-            # print(f"ID: {comment_id}, Parent ID: {parent_id}, Name: {name}, Content: {content}")
-            return jsonify({'id': comment_id, 'parent_id': parent_id, 'name': name, 'content': content})
+            comment_id, parent_id, table_id, name, content = row
+            print(f"ID: {comment_id}, Parent ID: {parent_id}, Table ID: {table_id}, Name: {name}, Content: {content}")
+            return jsonify({'id': comment_id, 
+                            "parent_id": parent_id,
+                            "table_id": table_id,
+                            "name": name,
+                            "content": content})
         else:
             print(f"No comment found with ID {comment_id}.")
             return jsonify({'message': f'No comment found with ID {comment_id}.'})
@@ -78,14 +86,19 @@ def query_comment():
 @app.route('/query-comments', methods=['GET'])
 def query_comments():
     try:
-        print('\nQuerying all comments...')
-        cursor.execute("SELECT * FROM user_comments")
+        table_id = request.args.get('table_id')
+        print('\nQuerying all comments in table {table_id}...'.format(table_id=table_id))
+        cursor.execute("SELECT * FROM user_comments where table_id = ?", (table_id,))
         rows = cursor.fetchall()
         comments = []
         for row in rows:
-            comment_id, parent_id, name, content = row
-            print(f"ID: {comment_id}, Parent ID: {parent_id}, Name: {name}, Content: {content}")
-            comments.append({'id': comment_id, 'parent_id': parent_id, 'name': name, 'content': content})
+            comment_id, parent_id, table_id, name, content = row
+            print(f"ID: {comment_id}, Parent ID: {parent_id}, Table ID: {table_id}, Name: {name}, Content: {content}")
+            comments.append({'id': comment_id, 
+                             "parent_id": parent_id,
+                             "table_id": table_id,
+                             "name": name,
+                             "content": content})
         return jsonify(comments)
     except Exception as e:
         print(f'Error occurred while querying the database: {str(e)}')

@@ -8,6 +8,8 @@
 
     <h2>Add a Comment</h2>
     <form id="commentForm">
+        <label for="table_id">Table ID:</label>
+        <input type="text" id="table_id" required><br>
         <label for="name">Name:</label>
         <input type="text" id="name" required><br>
         <label for="content">Comment:</label>
@@ -22,24 +24,65 @@
     <script>
         // Function to fetch and display comments
         function getComments() {
-            fetch('http://127.0.0.1:5000/query-comments')
+            const table_id_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            const commentList = document.getElementById('commentList');
+            commentList.innerHTML = '';
+
+            for (const table_id of table_id_list) {
+                fetch(`http://127.0.0.1:5000/query-comments?table_id=${table_id}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(comment => {
+                            const listItem = document.createElement('li'); // Create a new <li> element for each comment
+                            listItem.textContent = `${comment.id} : ${comment.parent_id} : ${comment.table_id} : ${comment.name}: ${comment.content}`;
+                            
+                            // Add a delete button for each comment
+                            const deleteButton = document.createElement('button');
+                            deleteButton.textContent = 'Delete';
+                            deleteButton.addEventListener('click', () => deleteComment(comment.id));
+                            listItem.appendChild(deleteButton);
+
+                            // Add a reply button for each comment
+                            const replyButton = document.createElement('button');
+                            replyButton.textContent = 'Reply';
+                            replyButton.addEventListener('click', () => ReplyComment(comment.id));
+                            listItem.appendChild(replyButton);
+
+                            commentList.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error(error);
+                    });
+            }
+        }
+
+        function ReplyComment(commentId) {
+            SubmitComment(commentId);
+        }
+
+        function SubmitComment(parentId) {
+            const table_id = document.getElementById('table_id').value;
+            const name = document.getElementById('name').value;
+            const content = document.getElementById('content').value;
+            const parent_id = parentId;
+    
+            fetch('http://127.0.0.1:5000/submit-comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    parent_id: parent_id,
+                    table_id: table_id,
+                    name: name,
+                    content: content
+                }),
+            })
                 .then(response => response.json())
                 .then(data => {
-                    const commentList = document.getElementById('commentList');
-                    commentList.innerHTML = '';
-
-                    data.forEach(comment => {
-                        const listItem = document.createElement('li');
-
-                        listItem.textContent = `${comment.name}: ${comment.content}`;
-                        // Add a delete button for each comment
-                        const deleteButton = document.createElement('button');
-                        deleteButton.textContent = 'Delete';
-                        deleteButton.addEventListener('click', () => deleteComment(comment.id));
-                        listItem.appendChild(deleteButton);
-
-                        commentList.appendChild(listItem);
-                    });
+                    console.log(data);
+                    getComments(); // Refresh comments after submission
                 })
                 .catch(error => {
                     console.error(error);
@@ -65,28 +108,7 @@
         const commentForm = document.getElementById('commentForm');
         commentForm.addEventListener('submit', function (event) {
             event.preventDefault();
-
-            const name = document.getElementById('name').value;
-            const content = document.getElementById('content').value;
-
-            fetch('http://127.0.0.1:5000/submit-comment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    name: name,
-                    content: content,
-                }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    console.log(data);
-                    getComments(); // Refresh comments after submission
-                })
-                .catch(error => {
-                    console.error(error);
-                });
+            SubmitComment(0);
         });
 
         // Fetch comments when the page loads
