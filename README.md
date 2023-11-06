@@ -72,9 +72,63 @@ sudo systemctl daemon-reload
 
 In the web page, users can enter their name and a comment. When they click the `Submit` button, the comment will be posted to the server.
 
-## Other Tools
+## Tools
 
 In the `tools` folder, there are serveral Python scripts: 
 - `delete.py`: delete one comment from the database by id
 - `select-1.py`: select one comment from the database by id
 - `select-all.py`: select all comments from the database
+
+
+## Appendix
+
+### Configuring Apache2 as a Reverse Proxy
+
+- Add ProxyPass and ProxyPassReverse to the VirtualHost configuration file (`/etc/apache2/sites-available/default-ssl.conf`)
+```
+        <VirtualHost 172.31.19.160:443>
+                ServerName www.example.com
+                ServerAlias example.com
+                ServerAdmin webmaster@localhost
+                DocumentRoot /var/www/html
+
+                ErrorLog ${APACHE_LOG_DIR}/error.log
+                CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+                SSLEngine on
+                SSLCertificateFile /etc/letsencrypt/live/example.com/fullchain.pem
+                SSLCertificateKeyFile /etc/letsencrypt/live/example.com/privkey.pem
+
+                SSLProxyEngine on
+                SSLProxyVerify none
+                SSLProxyCheckPeerCN off
+                SSLProxyCheckPeerName off
+
+                <Location /comment>
+                        ProxyPass https://localhost:5000/
+                        ProxyPassReverse https://localhost:5000/
+                </Location>
+        </VirtualHost>
+```
+
+- Enable the proxy modules
+```
+sudo a2enmod proxy
+sudo a2enmod proxy_http
+```
+
+- Restart Apache2
+```
+sudo systemctl restart apache2
+```
+
+### Some Bugs
+
+These bugs are found in `/var/log/apache2/error.log` during the test of the server.
+
+  - `SSL Proxy requested for evaluation.benchcouncil.org:443 but not enabled [Hint: SSLProxyEngine]`
+    - Solution: add `SSLProxyEngine on` to the VirtualHost configuration file
+
+  - `Error during SSL Handshake with remote server returned by /comment/query-comments` 
+    - Solution: add `SSLProxyVerify none` (`SSLProxyCheckPeerCN off` and `SSLProxyCheckPeerName off`) to the VirtualHost configuration file
+
