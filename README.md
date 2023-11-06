@@ -7,11 +7,9 @@ The server stores the comments in a SQLite database. The database file is `comme
 
 You will need to install the following:
 ```bash
-pip intall -r requirements.txt
-```
-or
-```bash
-conda install --file requirements.txt
+sudo apt-get install libsqlite3-dev
+
+pip3 install -r requirements.txt
 ```
 
 ## Start the server
