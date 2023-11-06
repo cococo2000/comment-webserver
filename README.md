@@ -12,19 +12,59 @@ sudo apt-get install libsqlite3-dev
 pip3 install -r requirements.txt
 ```
 
-## Start the server
+## Test the server
 
-To start the server, run the following command:
+- Start the server
+  - To start the server, run the following command:
+	```bash
+	./start-app.sh
+	```
+  - In `start-app.sh`, you can change the port number and the host name. The default port number is 5000 and the default host name is `127.0.0.1`. 
+  - `-w` parameter is used to specify the number of workers. The default number of workers is 4.
+
+- Stop the server
+  - Press `Ctrl+C` to stop the server.
+
+## Deploy the server
+
+To use the system service manager (such as systemd) to manage a Gunicorn process and ensure it runs continuously on your server, you can follow these steps:
+
+- Edit the content of `comment-webserver.service`
+  - Description: A description of the service.
+  - User and Group: The user and group under which the service should run.
+  - WorkingDirectory: The root directory of your Comment Web Server.
+  - ExecStart: The command to start the Gunicorn process.
+  - Restart: Specifies when the service should be restarted. "always" means it will automatically restart whenever it exits.
+- Copy `comment-webserver.service` to `/etc/systemd/system`
 ```bash
-./start-app.sh
+sudo cp comment-webserver.service /etc/systemd/system
 ```
-
-In `start-app.sh`, you can change the port number and the host name. The default port number is 5000 and the default host name is `127.0.0.1`. 
-And `-w` parameter is used to specify the number of workers. The default number of workers is 4.
-
-## Stop the server
-
-Press `Ctrl+C` to stop the server.
+- Enable and start the service 
+```bash
+sudo systemctl enable comment-webserver.service
+sudo systemctl start comment-webserver.service
+```
+Or reload the service if you have made any changes to the service file
+```bash
+sudo systemctl daemon-reload
+```
+- Manage the service
+  - Check the status of the service
+  ```bash
+  sudo systemctl status comment-webserver.service
+  ```
+  - Stop the service
+  ```bash
+  sudo systemctl stop comment-webserver.service
+  ```
+  - Restart the service
+  ```bash
+  sudo systemctl restart comment-webserver.service
+  ```
+  - Disable the service
+  ```bash
+  sudo systemctl disable comment-webserver.service
+  ```
 
 ## Example
 

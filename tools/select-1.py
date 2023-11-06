@@ -7,8 +7,8 @@ def query_comment_by_id(comment_id):
         cursor.execute("SELECT * FROM user_comments WHERE id = ?", (comment_id,))
         row = cursor.fetchone()
         if row:
-            comment_id, parent_id, name, content = row
-            print(f"ID: {comment_id}, Parent ID: {parent_id}, Name: {name}, Content: {content}")
+            comment_id, parent_id, table_id, name, content = row
+            print(f"ID: {comment_id}, Parent ID: {parent_id}, Table ID: {table_id}, Name: {name}, Content: {content}")
         else:
             print(f"No comment found with ID {comment_id}.")
         db_connection.close()
