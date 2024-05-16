@@ -126,7 +126,7 @@ sudo systemctl restart apache2
 
 These bugs are found in `/var/log/apache2/error.log` during the test of the server.
 
-  - `SSL Proxy requested for evaluation.benchcouncil.org:443 but not enabled [Hint: SSLProxyEngine]`
+  - `SSL Proxy requested for yourweb.com:443 but not enabled [Hint: SSLProxyEngine]`
     - Solution: add `SSLProxyEngine on` to the VirtualHost configuration file
 
   - `Error during SSL Handshake with remote server returned by /comment/query-comments` 
